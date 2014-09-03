@@ -83,6 +83,7 @@ NIL_ATTR = {'{%s}nil' % _ns_xsi: 'true'}
 
 
 def _append(parent, child_elt):
+    #print 'parent: {%s}, child: {%s}' % (etree.tostring(parent, pretty_print=True), etree.tostring(child_elt, pretty_print=True))
     if hasattr(parent, 'append'):
         parent.append(child_elt)
     else:
@@ -631,7 +632,12 @@ class XmlDocument(SubXmlBase):
     def _get_members_etree(self, ctx, cls, inst, parent, delay):
         try:
             parent_cls = getattr(cls, '__extends__', None)
-
+            #print cls
+            #print inst
+            #print 'parent: {%s}, child: {%s}' % (
+            #    etree.tostring(parent, pretty_print=True),
+            #    parent_cls
+            #)
             if not (parent_cls is None):
                 ret = self._get_members_etree(ctx, parent_cls, inst, parent, delay)
                 if ret is not None:
@@ -651,7 +657,7 @@ class XmlDocument(SubXmlBase):
                     subvalue = getattr(inst, k, None)
                 except: # e.g. SqlAlchemy could throw NoSuchColumnError
                     subvalue = None
-
+                #print "subvalue %s" % subvalue
                 # This is a tight loop, so enable this only when necessary.
                 # logger.debug("get %r(%r) from %r: %r" % (k, v, inst, subvalue))
 
@@ -669,7 +675,15 @@ class XmlDocument(SubXmlBase):
                     continue
 
                 mo = v.Attributes.max_occurs
-                if subvalue is not None and mo > 1:
+                if issubclass(v, AnyXml) and subvalue is not None and v.Attributes.wrap_xml is False:
+                        print "parent %s" % etree.tostring(parent, pretty_print=True)
+                        print "wrap_xml == false: %s" % etree.tostring(subvalue, pretty_print=True)
+                        print sub_name
+                        #parent.text = "bla"
+                        self.to_parent(ctx, v, subvalue, parent, sub_ns, "value")
+                        continue
+
+                elif subvalue is not None and mo > 1:
                     if isinstance(subvalue, PushBase):
                         while True:
                             sv = (yield)

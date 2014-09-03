@@ -232,10 +232,11 @@ class TestXmlSchema(unittest.TestCase):
 
         class Key_value_store(ComplexModel):
             __namespace__ = "ns_any"
-
-            key = AnyXml.customize(max_occurs='unbounded')
-            value = AnyXml(schema_tag='{%s}any' % ns.xsd, _wrapper=True)
-            #value_without_wrapping = AnyXml(schema_tag='{%s}any' % ns.xsd, wrapped=False)
+            _type_info = [
+                ('key', AnyXml.customize(max_occurs='unbounded')),
+                ('value', AnyXml(schema_tag='{%s}any' % ns.xsd)),
+                ('value_without_wrapping', AnyXml(schema_tag='{%s}any' % ns.xsd, wrap_xml=False)),
+            ]
 
         docs = get_schema_documents([Key_value_store])
         #print(etree.tostring(docs['tns'], pretty_print=True))
@@ -250,8 +251,10 @@ class TestXmlSchema(unittest.TestCase):
         subvalue_xml_2 = etree.SubElement(any_xml_2, 'string')
         subvalue_xml_2.text = 'subvalue_xml_2'
 
-        key_value_store_1 = Key_value_store(value=any_xml_1)
-        key_value_store_2 = Key_value_store(value=any_xml_2)
+        from copy import deepcopy
+
+        key_value_store_1 = Key_value_store(value=any_xml_1, value_without_wrapping=deepcopy(any_xml_1))
+        key_value_store_2 = Key_value_store(value=any_xml_2, value_without_wrapping=deepcopy(any_xml_2))
 
         #print((etree.tostring(key_value_store_1.value, pretty_print=True)))
         assert key_value_store_1.value.tag == 'value'
@@ -269,40 +272,57 @@ class TestXmlSchema(unittest.TestCase):
         XmlDocument().to_parent(None, Key_value_store, key_value_store_1, element_1, ns.xsd)
         print((etree.tostring(element_1, pretty_print=True)))
         element_2 = etree.Element('parent_2')
-        XmlDocument().to_parent(None, Key_value_store, key_value_store_2, element_2, ns.xsd)
-        print((etree.tostring(element_2, pretty_print=True)))
+        #XmlDocument().to_parent(None, Key_value_store, key_value_store_2, element_2, ns.xsd)
+        #print((etree.tostring(element_2, pretty_print=True)))
 
-        # Should work with and without wrapping
-        store_1 = element_1[0][0]
-        print((etree.tostring(store_1, pretty_print=True)))
-        assert store_1[0].tag == 'value'
-        assert store_1[0].text == 'test_value'
-        assert len(store_1[0]) == 0
+        # Should work with wrapping
+        #print element_1[0][0].tag
+        #store_1 = element_1[0][0]
+        #print((etree.tostring(store_1, pretty_print=True)))
+        #assert store_1.tag == '{%s}value' % key_value_store_1.__namespace__
+        #assert store_1[0].tag == 'value'
+        #assert store_1[0].text == 'test_value'
+        #assert len(store_1[0]) == 0
 
-        store_2 = element_2[0][0]
-        assert len(store_2[0]) == 2
-        assert store_2[0][0].tag == 'string'
-        assert store_2[0][0].text == 'subvalue_xml_1'
-        assert store_2[0][1].tag == 'string'
-        assert store_2[0][1].text == 'subvalue_xml_2'
+        #store_2 = element_2[0][0]
+        #assert store_2.tag == '{%s}value' % key_value_store_2.__namespace__
+        #assert len(store_2[0]) == 2
+        #assert store_2[0][0].tag == 'string'
+        #assert store_2[0][0].text == 'subvalue_xml_1'
+        #assert store_2[0][1].tag == 'string'
+        #assert store_2[0][1].text == 'subvalue_xml_2'
 
 
-        # TODO: use value_without_wrapping + tests
+        # with wrapping
+        #store_without_wrapping_1 = element_1[0][0]
+        #print((etree.tostring(store_1, pretty_print=True)))
+        #assert store_without_wrapping_1 == '{%s}value' % ''
+        #assert store_without_wrapping_1[0].tag == 'value'
+        #assert store_without_wrapping_1[0].text == 'test_value'
+        #assert len(store_without_wrapping_1[0]) == 0
+
+        #store_without_wrapping_2 = element_2[0][0]
+        #assert store_without_wrapping_2.tag == '{%s}value' % ''
+        #assert len(store_without_wrapping_2[0]) == 2
+        #assert store_without_wrapping_2[0][0].tag == 'string'
+        #assert store_without_wrapping_2[0][0].text == 'subvalue_xml_1'
+        #assert store_without_wrapping_2[0][1].tag == 'string'
+        #assert store_without_wrapping_2[0][1].text == 'subvalue_xml_2'
 
 
         # tests for key
-        any_xml = etree.Element('key')
-        any_xml.text = 'test_key'
-        key_value_store = Key_value_store(key=[any_xml])
+        #any_xml = etree.Element('key')
+        #any_xml.text = 'test_key'
+        #key_value_store = Key_value_store(key=[any_xml])
 
-        print((etree.tostring(key_value_store.key[0], pretty_print=True)))
-        assert key_value_store.key[0].tag == 'key'
-        assert key_value_store.key[0].text == 'test_key'
-        assert len(key_value_store.key[0]) == 0
+        #print((etree.tostring(key_value_store.key[0], pretty_print=True)))
+        #assert key_value_store.key[0].tag == 'key'
+        #assert key_value_store.key[0].text == 'test_key'
+        #assert len(key_value_store.key[0]) == 0
 
-        element = etree.Element('parent')
-        XmlDocument().to_parent(None, Key_value_store, key_value_store, element, ns.xsd)
-        print((etree.tostring(element, pretty_print=True)))
+        #element = etree.Element('parent')
+        #XmlDocument().to_parent(None, Key_value_store, key_value_store, element, ns.xsd)
+        #print((etree.tostring(element, pretty_print=True)))
         assert 0
 
     def _build_xml_data_test_schema(self, custom_root):
