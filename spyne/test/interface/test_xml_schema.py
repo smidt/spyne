@@ -226,6 +226,40 @@ class TestXmlSchema(unittest.TestCase):
         assert any[0].attrib['namespace'] == '##other'
         assert any[0].attrib['processContents'] == 'lax'
 
+    def test_any_tag_with_unwrapped_options(self):
+        logging.basicConfig(level=logging.DEBUG)
+
+        class Key_value_store(ComplexModel):
+            __namespace__ = "ns_any"
+
+            key = Unicode
+            value = AnyXml(schema_tag='{%s}any' % ns.xsd)
+
+        docs = get_schema_documents([Key_value_store])
+        print(etree.tostring(docs['tns'], pretty_print=True))
+
+        any_xml = etree.Element('value')
+        any_xml.text = 'test_value'
+        key_value_store = Key_value_store(value=any_xml)
+        assert key_value_store.value.tag == 'value'
+        assert key_value_store.value.text == 'test_value'
+        assert len(key_value_store.value) == 0
+
+
+        any_xml = etree.Element('value')
+        subvalue_xml_1 = etree.SubElement(any_xml, 'string')
+        subvalue_xml_1.text = 'subvalue_xml_1'
+        subvalue_xml_2 = etree.SubElement(any_xml, 'string')
+        subvalue_xml_2.text = 'subvalue_xml_2'
+        key_value_store = Key_value_store(value=any_xml)
+        assert len(key_value_store.value) == 2
+        assert key_value_store.value[0].tag == 'string'
+        assert key_value_store.value[0].text == 'subvalue_xml_1'
+        assert key_value_store.value[1].tag == 'string'
+        assert key_value_store.value[1].text == 'subvalue_xml_2'
+
+
+
     def _build_xml_data_test_schema(self, custom_root):
         tns = 'kickass.ns'
 
