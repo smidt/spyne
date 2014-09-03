@@ -37,6 +37,7 @@ from spyne.model import Unicode
 from spyne.model import Uuid
 from spyne.model import Boolean
 from spyne.protocol.soap import Soap11
+from spyne.protocol.xml import XmlDocument
 from spyne.service import ServiceBase
 from spyne.util.xml import get_schema_documents
 from spyne.util.xml import parse_schema_element
@@ -232,33 +233,76 @@ class TestXmlSchema(unittest.TestCase):
         class Key_value_store(ComplexModel):
             __namespace__ = "ns_any"
 
-            key = Unicode
+            key = AnyXml.customize(max_occurs='unbounded')
             value = AnyXml(schema_tag='{%s}any' % ns.xsd)
+            #value_without_wrapping = AnyXml(schema_tag='{%s}any' % ns.xsd, wrapped=False)
 
         docs = get_schema_documents([Key_value_store])
-        print(etree.tostring(docs['tns'], pretty_print=True))
+        #print(etree.tostring(docs['tns'], pretty_print=True))
 
-        any_xml = etree.Element('value')
-        any_xml.text = 'test_value'
-        key_value_store = Key_value_store(value=any_xml)
-        assert key_value_store.value.tag == 'value'
-        assert key_value_store.value.text == 'test_value'
-        assert len(key_value_store.value) == 0
+        # tests for value
+        any_xml_1 = etree.Element('value')
+        any_xml_1.text = 'test_value'
 
-
-        any_xml = etree.Element('value')
-        subvalue_xml_1 = etree.SubElement(any_xml, 'string')
+        any_xml_2 = etree.Element('value')
+        subvalue_xml_1 = etree.SubElement(any_xml_2, 'string')
         subvalue_xml_1.text = 'subvalue_xml_1'
-        subvalue_xml_2 = etree.SubElement(any_xml, 'string')
+        subvalue_xml_2 = etree.SubElement(any_xml_2, 'string')
         subvalue_xml_2.text = 'subvalue_xml_2'
-        key_value_store = Key_value_store(value=any_xml)
-        assert len(key_value_store.value) == 2
-        assert key_value_store.value[0].tag == 'string'
-        assert key_value_store.value[0].text == 'subvalue_xml_1'
-        assert key_value_store.value[1].tag == 'string'
-        assert key_value_store.value[1].text == 'subvalue_xml_2'
+
+        key_value_store_1 = Key_value_store(value=any_xml_1)
+        key_value_store_2 = Key_value_store(value=any_xml_2)
+
+        #print((etree.tostring(key_value_store_1.value, pretty_print=True)))
+        assert key_value_store_1.value.tag == 'value'
+        assert key_value_store_1.value.text == 'test_value'
+        assert len(key_value_store_1.value) == 0
+
+        #print((etree.tostring(key_value_store.value, pretty_print=True)))
+        assert len(key_value_store_2.value) == 2
+        assert key_value_store_2.value[0].tag == 'string'
+        assert key_value_store_2.value[0].text == 'subvalue_xml_1'
+        assert key_value_store_2.value[1].tag == 'string'
+        assert key_value_store_2.value[1].text == 'subvalue_xml_2'
+
+        element_1 = etree.Element('parent_1')
+        XmlDocument().to_parent(None, Key_value_store, key_value_store_1, element_1, ns.xsd)
+        print((etree.tostring(element_1, pretty_print=True)))
+        element_2 = etree.Element('parent_2')
+        XmlDocument().to_parent(None, Key_value_store, key_value_store_2, element_2, ns.xsd)
+        print((etree.tostring(element_2, pretty_print=True)))
+
+        # Should work with and without wrapping
+        store_1 = element_1[0][0]
+        print((etree.tostring(store_1, pretty_print=True)))
+        assert store_1[0].tag == 'value'
+        assert store_1[0].text == 'test_value'
+        assert len(store_1[0]) == 0
+
+        store_2 = element_2[0][0]
+        assert len(store_2[0]) == 2
+        assert store_2[0][0].tag == 'string'
+        assert store_2[0][0].text == 'subvalue_xml_1'
+        assert store_2[0][1].tag == 'string'
+        assert store_2[0][1].text == 'subvalue_xml_2'
 
 
+        # TODO: use value_without_wrapping + tests
+
+
+        # tests for key
+        any_xml = etree.Element('key')
+        any_xml.text = 'test_key'
+        key_value_store = Key_value_store(key=[any_xml])
+
+        print((etree.tostring(key_value_store.key[0], pretty_print=True)))
+        assert key_value_store.key[0].tag == 'key'
+        assert key_value_store.key[0].text == 'test_key'
+        assert len(key_value_store.key[0]) == 0
+
+        element = etree.Element('parent')
+        XmlDocument().to_parent(None, Key_value_store, key_value_store, element, ns.xsd)
+        print((etree.tostring(element, pretty_print=True)))
 
     def _build_xml_data_test_schema(self, custom_root):
         tns = 'kickass.ns'
