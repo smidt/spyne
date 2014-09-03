@@ -136,6 +136,9 @@ class AnyXml(SimpleModel):
         process_contents = None
         """Xml-Schema specific processContents attribute"""
 
+        wrap_xml = True
+        """If False, the value from the complex model will not be wrapped."""
+
 
 # EXPERIMENTAL
 class AnyHtml(SimpleModel):

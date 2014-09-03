@@ -234,7 +234,7 @@ class TestXmlSchema(unittest.TestCase):
             __namespace__ = "ns_any"
 
             key = AnyXml.customize(max_occurs='unbounded')
-            value = AnyXml(schema_tag='{%s}any' % ns.xsd)
+            value = AnyXml(schema_tag='{%s}any' % ns.xsd, _wrapper=True)
             #value_without_wrapping = AnyXml(schema_tag='{%s}any' % ns.xsd, wrapped=False)
 
         docs = get_schema_documents([Key_value_store])
@@ -303,6 +303,7 @@ class TestXmlSchema(unittest.TestCase):
         element = etree.Element('parent')
         XmlDocument().to_parent(None, Key_value_store, key_value_store, element, ns.xsd)
         print((etree.tostring(element, pretty_print=True)))
+        assert 0
 
     def _build_xml_data_test_schema(self, custom_root):
         tns = 'kickass.ns'

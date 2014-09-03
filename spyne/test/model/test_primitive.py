@@ -426,6 +426,9 @@ class TestPrimitive(unittest.TestCase):
         self.assertEquals(b, None)
 
     def test_anyxml(self):
+        assert AnyXml().Attributes.wrap_xml == True
+        assert AnyXml(wrap_xml=False).Attributes.wrap_xml == False
+
         parent = etree.Element('parent')
         XmlDocument().to_parent(None, AnyXml, None,  parent, ns_test, "anyxml")
         self.assertEquals(parent.tag, 'parent')
